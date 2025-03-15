@@ -27,6 +27,7 @@ namespace FpsGame.Player
         private void LateUpdate()
         {
             HandleMovement();
+            HandleMovementSpeed();
         }
 
         private void FixedUpdate()
@@ -51,6 +52,16 @@ namespace FpsGame.Player
                 forward,
                 Time.deltaTime * m_SmoothTime
             );
+        }
+
+        private void HandleMovementSpeed()
+        {
+            Vector3 flatVel = new Vector3(m_Rigidbody.linearVelocity.x, 0, m_Rigidbody.linearVelocity.z);
+            if (flatVel.magnitude > speed)
+            {
+                Vector3 limitFlatVel = flatVel.normalized * speed;
+                m_Rigidbody.linearVelocity = new Vector3(limitFlatVel.x, m_Rigidbody.linearVelocity.y, limitFlatVel.z);
+            }
         }
     }
 }
