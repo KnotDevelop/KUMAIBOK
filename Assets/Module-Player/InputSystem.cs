@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -6,31 +5,32 @@ namespace FpsGame.Player
 {
     public class PlayerInputSystem : MonoBehaviour
     {
-        PlayerInputAction inputAction;
+        private PlayerInputAction inputAction;
         [SerializeField] Vector2 lookInput;
         [SerializeField] Vector2 moveInput;
         public Vector2 LookInput { get => lookInput; private set => lookInput = value; }
         public Vector2 MoveInput { get => moveInput; private set => moveInput = value; }
+        public PlayerInputAction InputAction { get => inputAction; private set => inputAction = value; }
 
         private void Awake()
         {
-            inputAction = new PlayerInputAction();
+            InputAction = new PlayerInputAction();
         }
         private void OnEnable()
         {
-            inputAction.Player.Enable();
-            inputAction.Player.Look.performed += OnLook;
-            inputAction.Player.Look.canceled += OnLook;
-            inputAction.Player.Move.performed += OnMove;
-            inputAction.Player.Move.canceled += OnMove;
+            InputAction.Player.Enable();
+            InputAction.Player.Look.performed += OnLook;
+            InputAction.Player.Look.canceled += OnLook;
+            InputAction.Player.Move.performed += OnMove;
+            InputAction.Player.Move.canceled += OnMove;
         }
         private void OnDisable()
         {
-            inputAction.Player.Look.performed -= OnLook;
-            inputAction.Player.Look.canceled -= OnLook;
-            inputAction.Player.Move.performed += OnMove;
-            inputAction.Player.Move.canceled += OnMove;
-            inputAction.Disable();
+            InputAction.Player.Look.performed -= OnLook;
+            InputAction.Player.Look.canceled -= OnLook;
+            InputAction.Player.Move.performed += OnMove;
+            InputAction.Player.Move.canceled += OnMove;
+            InputAction.Disable();
         }
 
         private void OnLook(InputAction.CallbackContext context)
