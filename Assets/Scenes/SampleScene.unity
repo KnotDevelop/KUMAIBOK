@@ -1805,8 +1805,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Camera: {fileID: 1334095737}
-  speed: 1
+  walkSpeed: 3
+  sprintSpeed: 6
+  crouchSpeed: 1.5
+  startYScale: 1
+  crouchYScale: 0.5
   m_SmoothTime: 40
+  action: 0
 --- !u!114 &877492774
 MonoBehaviour:
   m_ObjectHideFlags: 0
