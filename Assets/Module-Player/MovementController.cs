@@ -1,7 +1,7 @@
 using FpsGame.Player;
 using UnityEngine;
 
-namespace FpsGame.Player.Camera
+namespace FpsGame.Player
 {
     public class MovementController : MonoBehaviour
     {
