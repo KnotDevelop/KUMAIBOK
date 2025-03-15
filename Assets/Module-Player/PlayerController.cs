@@ -6,9 +6,29 @@ namespace FpsGame.Player
     {
         [SerializeField]
         bool isGround = false;
+
+        [SerializeField]
+        private MovementController movement;
+        public bool IsGround
+        {
+            get => isGround;
+            set => isGround = value;
+        }
+
         void Update()
         {
             HandleIsGround();
+        }
+
+        private void LateUpdate()
+        {
+            if (isGround)
+                movement.HandleMovement();
+        }
+
+        private void FixedUpdate()
+        {
+            movement.HandleRotation();
         }
 
         public void HandleIsGround()

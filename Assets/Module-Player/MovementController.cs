@@ -24,17 +24,7 @@ namespace FpsGame.Player
             Cursor.visible = false;
         }
 
-        private void LateUpdate()
-        {
-            HandleMovement();
-        }
-
-        private void FixedUpdate()
-        {
-            HandleRotation();
-        }
-
-        private void HandleMovement()
+        public void HandleMovement()
         {
             Vector3 move =
                 m_Camera.forward * m_Input.MoveInput.y + m_Camera.right * m_Input.MoveInput.x;
@@ -42,7 +32,7 @@ namespace FpsGame.Player
             m_Rigidbody.AddForce(move.normalized * speed, ForceMode.VelocityChange);
         }
 
-        private void HandleRotation()
+        public void HandleRotation()
         {
             Vector3 forward = m_Camera.forward;
             forward.y = 0f;
