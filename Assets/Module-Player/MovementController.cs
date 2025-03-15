@@ -7,7 +7,7 @@ namespace FpsGame.Player
     {
         [SerializeField]
         private Transform m_Camera;
-        private PlayerInputSystem m_Input;
+        private InputSystem m_Input;
         private Rigidbody m_Rigidbody;
 
         [SerializeField]
@@ -23,16 +23,17 @@ namespace FpsGame.Player
         private float currentSpeed;
 
         [SerializeField]
-        private float m_SmoothTime = 40f;
+        private float m_SmoothRotTime = 40f;
 
-        enum PlayerAction { DEFAULT, SPRINT, CROUCH }
+        private enum PlayerAction { DEFAULT, SPRINT, CROUCH }
         [SerializeField]
         private PlayerAction action = PlayerAction.DEFAULT;
-        bool isMove = false;
+
+        private bool isMove = false;
 
         private void Start()
         {
-            m_Input = GetComponent<PlayerInputSystem>();
+            m_Input = GetComponent<InputSystem>();
             m_Rigidbody = GetComponent<Rigidbody>();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -50,7 +51,9 @@ namespace FpsGame.Player
             HandleRotation();
             HandleMovementSpeed();
         }
-
+        /// <summary>
+        /// Handles player movement based on input direction and speed.
+        /// </summary>
         private void HandleMovement()
         {
             Vector3 move = m_Camera.forward * m_Input.MoveInput.y + m_Camera.right * m_Input.MoveInput.x;
@@ -62,18 +65,21 @@ namespace FpsGame.Player
             else
                 isMove = true;
 
-            // กำหนด velocity โดยตรงเพื่อให้ความเร็วสม่ำเสมอ
             Vector3 targetVelocity = move * currentSpeed;
             m_Rigidbody.linearVelocity = new Vector3(targetVelocity.x, m_Rigidbody.linearVelocity.y, targetVelocity.z);
         }
-
+        /// <summary>
+        /// Smoothly rotates the player to match the camera's forward direction.
+        /// </summary>
         private void HandleRotation()
         {
             Vector3 forward = m_Camera.forward;
             forward.y = 0f;
-            transform.forward = Vector3.Slerp(transform.forward, forward, Time.deltaTime * m_SmoothTime);
+            transform.forward = Vector3.Slerp(transform.forward, forward, Time.deltaTime * m_SmoothRotTime);
         }
-
+        /// <summary>
+        /// Limits player movement speed to prevent exceeding the set speed.
+        /// </summary>
         private void HandleMovementSpeed()
         {
             Vector3 flatVel = new Vector3(m_Rigidbody.linearVelocity.x, 0, m_Rigidbody.linearVelocity.z);
@@ -84,6 +90,9 @@ namespace FpsGame.Player
                 m_Rigidbody.linearVelocity = new Vector3(limitedFlatVel.x, m_Rigidbody.linearVelocity.y, limitedFlatVel.z);
             }
         }
+        /// <summary>
+        /// Adjusts camera shake intensity based on player movement state.
+        /// </summary>
         private void HandleCameraNoise()
         {
             CinemachineBasicMultiChannelPerlin cinemachine = m_Camera.GetComponent<CinemachineBasicMultiChannelPerlin>();
@@ -107,6 +116,9 @@ namespace FpsGame.Player
                 cinemachine.FrequencyGain = 1f;
             }
         }
+        /// <summary>
+        /// Handles sprinting, increasing speed when the sprint key is pressed.
+        /// </summary>
         private void HandleSprint()
         {
             if (action == PlayerAction.CROUCH) return;
@@ -123,7 +135,9 @@ namespace FpsGame.Player
                 action = PlayerAction.DEFAULT;
             }
         }
-
+        /// <summary>
+        /// Handles crouching, adjusting player scale and speed accordingly.
+        /// </summary>
         private void HandleCrouch()
         {
             if (action == PlayerAction.SPRINT) return;
