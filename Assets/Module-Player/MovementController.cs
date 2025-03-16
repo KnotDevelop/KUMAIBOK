@@ -15,30 +15,35 @@ namespace FpsGame.Player
         private float m_SmoothRotTime = 40f;
 
         [SerializeField]
-        private float walkSpeed = 3f;
+        private float m_WalkSpeed = 3f;
         [SerializeField]
-        private float sprintSpeed = 6f;
-        float startSprintTime; //Timestamp
+        private float m_SprintSpeed = 6f;
+        private float m_StartSprintTime; //Timestamp
         [SerializeField]
-        float durationCanSilde = 1f;
+        private float m_DurationCanSilde = 1f;
         [SerializeField]
-        private float crouchSpeed = 1.5f;
+        private float m_CrouchSpeed = 1.5f;
         [SerializeField]
-        private float slideSpeed = 15f;
+        private float m_SlideSpeed = 15f;
         [SerializeField]
-        private float startYScale = 1f;
+        private float m_StartYScale = 1f;
         [SerializeField]
-        private float crouchYScale = 0.5f;
+        private float m_CrouchYScale = 0.5f;
         [SerializeField]
-        private float currentSpeed;
+        private float m_CurrentSpeed;
 
         [SerializeField]
-        bool isGround = false;
+        private bool m_IsGround = false;
+        public bool IsGround
+        {
+            get => m_IsGround;
+            set => m_IsGround = value;
+        }
 
         private enum PlayerAction { DEFAULT, SPRINT, CROUCH }
         [SerializeField]
-        private PlayerAction action = PlayerAction.DEFAULT;
-        private bool isMove = false;
+        private PlayerAction m_Action = PlayerAction.DEFAULT;
+        private bool m_IsMove = false;
 
         private void Start()
         {
@@ -46,7 +51,7 @@ namespace FpsGame.Player
             m_Rigidbody = GetComponent<Rigidbody>();
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            currentSpeed = walkSpeed;
+            m_CurrentSpeed = m_WalkSpeed;
         }
         void Update()
         {
@@ -61,15 +66,18 @@ namespace FpsGame.Player
             HandleRotation();
             HandleMovementSpeed();
         }
+        /// <summary>
+        /// Checks if the player is on the ground using a Raycast to detect the "WhatIsGround" tag.
+        /// </summary>
         public void HandleIsGround()
         {
             RaycastHit hit;
-            isGround = false;
+            m_IsGround = false;
             if (Physics.Raycast(transform.position, Vector3.down, out hit, 1.1f))
             {
                 if (hit.collider.tag == "WhatIsGround")
                 {
-                    isGround = true;
+                    m_IsGround = true;
                 }
             }
         }
@@ -83,11 +91,11 @@ namespace FpsGame.Player
             move.Normalize();
 
             if (move == Vector3.zero)
-                isMove = false;
+                m_IsMove = false;
             else
-                isMove = true;
+                m_IsMove = true;
 
-            Vector3 targetVelocity = move * currentSpeed;
+            Vector3 targetVelocity = move * m_CurrentSpeed;
             m_Rigidbody.linearVelocity = new Vector3(targetVelocity.x, m_Rigidbody.linearVelocity.y, targetVelocity.z);
         }
         /// <summary>
@@ -106,9 +114,9 @@ namespace FpsGame.Player
         {
             Vector3 flatVel = new Vector3(m_Rigidbody.linearVelocity.x, 0, m_Rigidbody.linearVelocity.z);
 
-            if (flatVel.sqrMagnitude > currentSpeed * currentSpeed)
+            if (flatVel.sqrMagnitude > m_CurrentSpeed * m_CurrentSpeed)
             {
-                Vector3 limitedFlatVel = flatVel.normalized * currentSpeed;
+                Vector3 limitedFlatVel = flatVel.normalized * m_CurrentSpeed;
                 m_Rigidbody.linearVelocity = new Vector3(limitedFlatVel.x, m_Rigidbody.linearVelocity.y, limitedFlatVel.z);
             }
         }
@@ -118,9 +126,9 @@ namespace FpsGame.Player
         private void HandleCameraNoise()
         {
             CinemachineBasicMultiChannelPerlin cinemachine = m_Camera.GetComponent<CinemachineBasicMultiChannelPerlin>();
-            if (isMove)
+            if (m_IsMove)
             {
-                switch (action)
+                switch (m_Action)
                 {
                     case PlayerAction.DEFAULT:
                         cinemachine.FrequencyGain = 2f;
@@ -143,76 +151,82 @@ namespace FpsGame.Player
         /// </summary>
         private void HandleSprint()
         {
-            if (action == PlayerAction.CROUCH) return;
+            if (m_Action == PlayerAction.CROUCH) return;
 
             if (m_Input.InputAction.Player.Sprint.WasPerformedThisFrame())
             {
-                currentSpeed = sprintSpeed;
-                startSprintTime = Time.time;
-                action = PlayerAction.SPRINT;
+                m_CurrentSpeed = m_SprintSpeed;
+                m_StartSprintTime = Time.time;
+                m_Action = PlayerAction.SPRINT;
             }
             else if (m_Input.InputAction.Player.Sprint.WasReleasedThisFrame())
             {
-                currentSpeed = walkSpeed;
-                action = PlayerAction.DEFAULT;
+                m_CurrentSpeed = m_WalkSpeed;
+                m_Action = PlayerAction.DEFAULT;
             }
         }
+        /// <summary>
+        /// Checks if the player can slide based on the sprint duration.
+        /// </summary>
         bool CanSlide()
         {
-            return Time.time > startSprintTime + durationCanSilde;
+            return Time.time > m_StartSprintTime + durationCanSilde;
         }
         /// <summary>
-        /// Handles crouching, adjusting player scale and speed accordingly.
+        /// Handles crouching by changing the player's scale and adjusting movement speed.
         /// </summary>
         private void HandleCrouch()
         {
             if (m_Input.InputAction.Player.Crouch.WasPerformedThisFrame())
             {
-                transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
+                transform.localScale = new Vector3(transform.localScale.x, m_CrouchYScale, transform.localScale.z);
                 m_Rigidbody.AddForce(Vector3.down * 5f, ForceMode.Impulse);
 
-                if (action == PlayerAction.SPRINT && CanSlide())
+                if (m_Action == PlayerAction.SPRINT && CanSlide())
                 {
                     StartCoroutine(Sliding());
                 }
                 else
                 {
-                    currentSpeed = crouchSpeed;
+                    m_CurrentSpeed = m_CrouchSpeed;
                 }
-                action = PlayerAction.CROUCH;
+                m_Action = PlayerAction.CROUCH;
             }
             else if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
             {
-                transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-                currentSpeed = walkSpeed;
-                action = PlayerAction.DEFAULT;
+                transform.localScale = new Vector3(transform.localScale.x, m_StartYScale, transform.localScale.z);
+                m_CurrentSpeed = m_WalkSpeed;
+                m_Action = PlayerAction.DEFAULT;
             }
         }
+        /// <summary>
+        /// Initiates a sliding motion for 1 second, gradually reducing speed to crouch speed.
+        /// </summary>
         IEnumerator Sliding()
         {
-            currentSpeed = slideSpeed;
+            m_CurrentSpeed = m_SlideSpeed;
             float duration = 1f;
             float elapsedTime = 0f;
 
             while (elapsedTime < duration)
             {
-                currentSpeed = Mathf.Lerp(slideSpeed, crouchSpeed, elapsedTime / duration);
+                m_CurrentSpeed = Mathf.Lerp(m_SlideSpeed, m_CrouchSpeed, elapsedTime / duration);
                 elapsedTime += Time.deltaTime;
 
                 if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
                 {
-                    transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
-                    currentSpeed = walkSpeed;
-                    action = PlayerAction.DEFAULT;
+                    transform.localScale = new Vector3(transform.localScale.x, m_StartYScale, transform.localScale.z);
+                    m_CurrentSpeed = m_WalkSpeed;
+                    m_Action = PlayerAction.DEFAULT;
                     yield break;
                 }
 
-                if (!isMove) break;
+                if (!m_IsMove) break;
 
                 yield return null;
             }
 
-            currentSpeed = crouchSpeed;
+            m_CurrentSpeed = m_CrouchSpeed;
         }
     }
 }
