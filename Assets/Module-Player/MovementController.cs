@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Cinemachine;
 using UnityEngine;
 
@@ -11,24 +12,31 @@ namespace FpsGame.Player
         private Rigidbody m_Rigidbody;
 
         [SerializeField]
+        private float m_SmoothRotTime = 40f;
+
+        [SerializeField]
         private float walkSpeed = 3f;
         [SerializeField]
         private float sprintSpeed = 6f;
+        float startSprintTime; //Timestamp
+        [SerializeField]
+        float durationCanSilde = 1f;
         [SerializeField]
         private float crouchSpeed = 1.5f;
+        [SerializeField]
+        private float slideSpeed = 15f;
         [SerializeField]
         private float startYScale = 1f;
         [SerializeField]
         private float crouchYScale = 0.5f;
+        [SerializeField]
         private float currentSpeed;
 
-        [SerializeField]
-        private float m_SmoothRotTime = 40f;
+
 
         private enum PlayerAction { DEFAULT, SPRINT, CROUCH }
         [SerializeField]
         private PlayerAction action = PlayerAction.DEFAULT;
-
         private bool isMove = false;
 
         private void Start()
@@ -126,7 +134,7 @@ namespace FpsGame.Player
             if (m_Input.InputAction.Player.Sprint.WasPerformedThisFrame())
             {
                 currentSpeed = sprintSpeed;
-
+                startSprintTime = Time.time;
                 action = PlayerAction.SPRINT;
             }
             else if (m_Input.InputAction.Player.Sprint.WasReleasedThisFrame())
@@ -135,18 +143,28 @@ namespace FpsGame.Player
                 action = PlayerAction.DEFAULT;
             }
         }
+        bool CanSlide()
+        {
+            return Time.time > startSprintTime + durationCanSilde;
+        }
         /// <summary>
         /// Handles crouching, adjusting player scale and speed accordingly.
         /// </summary>
         private void HandleCrouch()
         {
-            if (action == PlayerAction.SPRINT) return;
-
             if (m_Input.InputAction.Player.Crouch.WasPerformedThisFrame())
             {
                 transform.localScale = new Vector3(transform.localScale.x, crouchYScale, transform.localScale.z);
                 m_Rigidbody.AddForce(Vector3.down * 5f, ForceMode.Impulse);
-                currentSpeed = crouchSpeed;
+
+                if (action == PlayerAction.SPRINT && CanSlide())
+                {
+                    StartCoroutine(Sliding());
+                }
+                else
+                {
+                    currentSpeed = crouchSpeed;
+                }
                 action = PlayerAction.CROUCH;
             }
             else if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
@@ -155,6 +173,32 @@ namespace FpsGame.Player
                 currentSpeed = walkSpeed;
                 action = PlayerAction.DEFAULT;
             }
+        }
+        IEnumerator Sliding()
+        {
+            currentSpeed = slideSpeed;
+            float duration = 1f;
+            float elapsedTime = 0f;
+
+            while (elapsedTime < duration)
+            {
+                currentSpeed = Mathf.Lerp(slideSpeed, crouchSpeed, elapsedTime / duration);
+                elapsedTime += Time.deltaTime;
+
+                if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
+                {
+                    transform.localScale = new Vector3(transform.localScale.x, startYScale, transform.localScale.z);
+                    currentSpeed = walkSpeed;
+                    action = PlayerAction.DEFAULT;
+                    yield break;
+                }
+
+                if (!isMove) break;
+
+                yield return null;
+            }
+
+            currentSpeed = crouchSpeed;
         }
     }
 }
