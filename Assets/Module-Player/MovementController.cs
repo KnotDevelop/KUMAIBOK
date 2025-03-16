@@ -170,7 +170,7 @@ namespace FpsGame.Player
         /// </summary>
         bool CanSlide()
         {
-            return Time.time > m_StartSprintTime + durationCanSilde;
+            return Time.time > m_StartSprintTime + m_DurationCanSilde;
         }
         /// <summary>
         /// Handles crouching by changing the player's scale and adjusting movement speed.
