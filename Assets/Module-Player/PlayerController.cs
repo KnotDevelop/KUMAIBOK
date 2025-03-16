@@ -20,17 +20,6 @@ namespace FpsGame.Player
             HandleIsGround();
         }
 
-        private void LateUpdate()
-        {
-            if (isGround)
-                movement.HandleMovement();
-        }
-
-        private void FixedUpdate()
-        {
-            movement.HandleRotation();
-        }
-
         public void HandleIsGround()
         {
             RaycastHit hit;
