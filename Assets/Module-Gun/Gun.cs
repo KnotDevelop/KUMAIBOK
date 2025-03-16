@@ -8,7 +8,6 @@ namespace FpsGame.Gun
         public float damage;
         public float accuracy;
         public float rps;
-        public float currentBullet;
         public float magazineSize;
         public float reloadTime;
         public float recoil;
@@ -18,7 +17,8 @@ namespace FpsGame.Gun
         public float noise;
         public bool oneRoundReload;
 
-        Coroutine reloading_routine;
+        private float m_CurrentBullet;
+        private Coroutine m_ReloadingRoutine;
 
         public void Shot()
         {
@@ -27,8 +27,8 @@ namespace FpsGame.Gun
         [ContextMenu("Reload")]
         public void Reload()
         {
-            bool reloading = reloading_routine != null;
-            bool magazineFull = currentBullet >= magazineSize;
+            bool reloading = m_ReloadingRoutine != null;
+            bool magazineFull = m_CurrentBullet >= magazineSize;
 
             if (reloading || magazineFull)
             {
@@ -36,7 +36,7 @@ namespace FpsGame.Gun
                 return;
             }
 
-            reloading_routine = StartCoroutine(Reloading());
+            m_ReloadingRoutine = StartCoroutine(Reloading());
         }
         IEnumerator Reloading()
         {
@@ -46,26 +46,26 @@ namespace FpsGame.Gun
                 yield return new WaitForSeconds(reloadTime);
                 if (oneRoundReload)
                 {
-                    currentBullet += 1;
+                    m_CurrentBullet += 1;
                 }
                 else
                 {
                     //Bullet in inventory - (magazineSize - currentBullet)
-                    currentBullet = magazineSize;
+                    m_CurrentBullet = magazineSize;
                 }
 
-                if (currentBullet >= magazineSize)
+                if (m_CurrentBullet >= magazineSize)
                     break;
             }
-            reloading_routine = null;
+            m_ReloadingRoutine = null;
             Debug.Log("Reload success");
         }
         [ContextMenu("StopReload")]
         public void StopReload()
         {
-            if (reloading_routine == null) return;
-            StopCoroutine(reloading_routine);
-            reloading_routine = null;
+            if (m_ReloadingRoutine == null) return;
+            StopCoroutine(m_ReloadingRoutine);
+            m_ReloadingRoutine = null;
         }
         public void Aim()
         {
