@@ -34,6 +34,12 @@ public class SwingController : MonoBehaviour
     /// </summary>
     [SerializeField]
     InputAction shoot;
+
+    [SerializeField]
+    InputAction control;
+
+    [SerializeField]
+    float maxSpeed = 10;
     private Coroutine instanceCoroutine;
     private List<Coroutine> dotInstancesCoroutine = new List<Coroutine>();
 
@@ -65,11 +71,17 @@ public class SwingController : MonoBehaviour
     /// rigidbody unity Component
     /// </summary>
     [SerializeField]
-    Rigidbody rigidBody;
+    RigidBodyHandler rigidBody;
+
+    [SerializeField]
+    private float offsetPercentX;
 
     void Start()
     {
         shoot.Enable();
+        control.Enable();
+        rigidBody.RegisterVelocity("JumpSwing");
+        rigidBody.RegisterVelocity("BoostSwing");
     }
 
     void Update()
@@ -77,6 +89,7 @@ public class SwingController : MonoBehaviour
         InputHandler();
         UpdateCurrentPosition();
     }
+
     /// <summary>
     /// Apply event on each input.
     /// </summary>
@@ -97,6 +110,7 @@ public class SwingController : MonoBehaviour
             ResetSwing();
         }
     }
+
     /// <summary>
     /// Update the first dot on line renderer to current position
     /// </summary>
@@ -120,6 +134,7 @@ public class SwingController : MonoBehaviour
         }
         dotInstancesCoroutine.Clear();
         line.positionCount = 1;
+        rigidBody.doGravity = true;
     }
 
     /// <summary>
@@ -128,6 +143,8 @@ public class SwingController : MonoBehaviour
     /// <returns></returns>
     IEnumerator FlickerLine()
     {
+        rigidBody.doGravity = false;
+
         line.positionCount = lineResolution;
         for (int i = 0; i < lineResolution; i++)
         {
@@ -135,7 +152,7 @@ public class SwingController : MonoBehaviour
         }
         Vector3 center = Vector2.zero;
         center.y = Screen.height / 2;
-        center.x = Screen.width / 2;
+        center.x = Screen.width / 2 + Screen.width * offsetPercentX;
         Ray r = Camera.main.ScreenPointToRay(center);
 
         if (Physics.Raycast(r, out var hit, 200))
@@ -174,9 +191,11 @@ public class SwingController : MonoBehaviour
     /// </summary>
     private void BoostToSwingPoint()
     {
-        Vector3 displacement = swingPoint - transform.position;
-        displacement = displacement.normalized * upBoostForce;
-        rigidBody.AddForce(displacement * Time.deltaTime, ForceMode.VelocityChange);
+        var c = control.ReadValue<float>();
+        Vector3 toCenterForce = swingPoint - transform.position;
+        toCenterForce = toCenterForce.normalized * upBoostForce;
+        rigidBody.AddVelocity("BoostSwing", toCenterForce );
+        rigidBody.Clamp("BoostSwing", -maxSpeed, maxSpeed);
     }
 
     /// <summary>
@@ -186,6 +205,6 @@ public class SwingController : MonoBehaviour
     {
         Vector3 displacement = swingPoint - transform.position;
         displacement = displacement.normalized;
-        rigidBody.AddForce(displacement * boostForce, ForceMode.Impulse);
+        rigidBody.SetVelocity("JumpSwing", displacement * boostForce);
     }
 }
