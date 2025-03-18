@@ -9,26 +9,33 @@ namespace FpsGame.Player
         [SerializeField]
         private Transform m_Camera;
         private InputSystem m_Input;
-        private Rigidbody m_Rigidbody;
+        private RigidBodyHandler m_Rigidbody;
 
         [SerializeField]
         private float m_SmoothRotTime = 40f;
 
         [SerializeField]
         private float m_WalkSpeed = 3f;
+
         [SerializeField]
         private float m_SprintSpeed = 6f;
         private float m_StartSprintTime; //Timestamp
+
         [SerializeField]
         private float m_DurationCanSilde = 1f;
+
         [SerializeField]
         private float m_CrouchSpeed = 1.5f;
+
         [SerializeField]
         private float m_SlideSpeed = 15f;
+
         [SerializeField]
         private float m_StartYScale = 1f;
+
         [SerializeField]
         private float m_CrouchYScale = 0.5f;
+
         [SerializeField]
         private float m_CurrentSpeed;
 
@@ -40,32 +47,44 @@ namespace FpsGame.Player
             set => m_IsGround = value;
         }
 
-        private enum PlayerAction { DEFAULT, SPRINT, CROUCH }
+        private enum PlayerAction
+        {
+            DEFAULT,
+            SPRINT,
+            CROUCH,
+        }
+
         [SerializeField]
         private PlayerAction m_Action = PlayerAction.DEFAULT;
         private bool m_IsMove = false;
+        Vector3 debug_velo = new Vector3();
 
         private void Start()
         {
             m_Input = GetComponent<InputSystem>();
-            m_Rigidbody = GetComponent<Rigidbody>();
+            m_Rigidbody = GetComponent<RigidBodyHandler>();
+            m_Rigidbody.RegisterVelocity(nameof(MovementController));
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             m_CurrentSpeed = m_WalkSpeed;
         }
+
         void Update()
         {
             HandleIsGround();
             HandleSprint();
             HandleCrouch();
             HandleCameraNoise();
+            debug_velo = m_Rigidbody.GetVelocity(nameof(MovementController));
         }
+
         private void FixedUpdate()
         {
             HandleMovement();
             HandleRotation();
             HandleMovementSpeed();
         }
+
         /// <summary>
         /// Checks if the player is on the ground using a Raycast to detect the "WhatIsGround" tag.
         /// </summary>
@@ -81,12 +100,14 @@ namespace FpsGame.Player
                 }
             }
         }
+
         /// <summary>
         /// Handles player movement based on input direction and speed.
         /// </summary>
         private void HandleMovement()
         {
-            Vector3 move = m_Camera.forward * m_Input.MoveInput.y + m_Camera.right * m_Input.MoveInput.x;
+            Vector3 move =
+                m_Camera.forward * m_Input.MoveInput.y + m_Camera.right * m_Input.MoveInput.x;
             move.y = 0;
             move.Normalize();
 
@@ -96,8 +117,12 @@ namespace FpsGame.Player
                 m_IsMove = true;
 
             Vector3 targetVelocity = move * m_CurrentSpeed;
-            m_Rigidbody.linearVelocity = new Vector3(targetVelocity.x, m_Rigidbody.linearVelocity.y, targetVelocity.z);
+            m_Rigidbody.SetVelocity(
+                nameof(MovementController),
+                new Vector3(targetVelocity.x, 0, targetVelocity.z)
+            );
         }
+
         /// <summary>
         /// Smoothly rotates the player to match the camera's forward direction.
         /// </summary>
@@ -105,27 +130,37 @@ namespace FpsGame.Player
         {
             Vector3 forward = m_Camera.forward;
             forward.y = 0f;
-            transform.forward = Vector3.Slerp(transform.forward, forward, Time.deltaTime * m_SmoothRotTime);
+            transform.forward = Vector3.Slerp(
+                transform.forward,
+                forward,
+                Time.deltaTime * m_SmoothRotTime
+            );
         }
+
         /// <summary>
         /// Limits player movement speed to prevent exceeding the set speed.
         /// </summary>
         private void HandleMovementSpeed()
         {
-            Vector3 flatVel = new Vector3(m_Rigidbody.linearVelocity.x, 0, m_Rigidbody.linearVelocity.z);
+            Vector3 flatVel = m_Rigidbody.GetVelocity(nameof(MovementController));
 
             if (flatVel.sqrMagnitude > m_CurrentSpeed * m_CurrentSpeed)
             {
                 Vector3 limitedFlatVel = flatVel.normalized * m_CurrentSpeed;
-                m_Rigidbody.linearVelocity = new Vector3(limitedFlatVel.x, m_Rigidbody.linearVelocity.y, limitedFlatVel.z);
+                m_Rigidbody.SetVelocity(
+                    nameof(MovementController),
+                    new Vector3(limitedFlatVel.x, 0, limitedFlatVel.z)
+                );
             }
         }
+
         /// <summary>
         /// Adjusts camera shake intensity based on player movement state.
         /// </summary>
         private void HandleCameraNoise()
         {
-            CinemachineBasicMultiChannelPerlin cinemachine = m_Camera.GetComponent<CinemachineBasicMultiChannelPerlin>();
+            CinemachineBasicMultiChannelPerlin cinemachine =
+                m_Camera.GetComponent<CinemachineBasicMultiChannelPerlin>();
             if (m_IsMove)
             {
                 switch (m_Action)
@@ -146,12 +181,14 @@ namespace FpsGame.Player
                 cinemachine.FrequencyGain = 1f;
             }
         }
+
         /// <summary>
         /// Handles sprinting, increasing speed when the sprint key is pressed.
         /// </summary>
         private void HandleSprint()
         {
-            if (m_Action == PlayerAction.CROUCH) return;
+            if (m_Action == PlayerAction.CROUCH)
+                return;
 
             if (m_Input.InputAction.Player.Sprint.WasPerformedThisFrame())
             {
@@ -165,6 +202,7 @@ namespace FpsGame.Player
                 m_Action = PlayerAction.DEFAULT;
             }
         }
+
         /// <summary>
         /// Checks if the player can slide based on the sprint duration.
         /// </summary>
@@ -172,6 +210,7 @@ namespace FpsGame.Player
         {
             return Time.time > m_StartSprintTime + m_DurationCanSilde;
         }
+
         /// <summary>
         /// Handles crouching by changing the player's scale and adjusting movement speed.
         /// </summary>
@@ -179,8 +218,12 @@ namespace FpsGame.Player
         {
             if (m_Input.InputAction.Player.Crouch.WasPerformedThisFrame())
             {
-                transform.localScale = new Vector3(transform.localScale.x, m_CrouchYScale, transform.localScale.z);
-                m_Rigidbody.AddForce(Vector3.down * 5f, ForceMode.Impulse);
+                transform.localScale = new Vector3(
+                    transform.localScale.x,
+                    m_CrouchYScale,
+                    transform.localScale.z
+                );
+                // m_Rigidbody.AddForce(Vector3.down * 5f, ForceMode.Impulse);
 
                 if (m_Action == PlayerAction.SPRINT && CanSlide())
                 {
@@ -194,11 +237,16 @@ namespace FpsGame.Player
             }
             else if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
             {
-                transform.localScale = new Vector3(transform.localScale.x, m_StartYScale, transform.localScale.z);
+                transform.localScale = new Vector3(
+                    transform.localScale.x,
+                    m_StartYScale,
+                    transform.localScale.z
+                );
                 m_CurrentSpeed = m_WalkSpeed;
                 m_Action = PlayerAction.DEFAULT;
             }
         }
+
         /// <summary>
         /// Initiates a sliding motion for 1 second, gradually reducing speed to crouch speed.
         /// </summary>
@@ -215,13 +263,18 @@ namespace FpsGame.Player
 
                 if (m_Input.InputAction.Player.Crouch.WasReleasedThisFrame())
                 {
-                    transform.localScale = new Vector3(transform.localScale.x, m_StartYScale, transform.localScale.z);
+                    transform.localScale = new Vector3(
+                        transform.localScale.x,
+                        m_StartYScale,
+                        transform.localScale.z
+                    );
                     m_CurrentSpeed = m_WalkSpeed;
                     m_Action = PlayerAction.DEFAULT;
                     yield break;
                 }
 
-                if (!m_IsMove) break;
+                if (!m_IsMove)
+                    break;
 
                 yield return null;
             }

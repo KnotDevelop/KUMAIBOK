@@ -732,36 +732,14 @@ GameObject:
   - component: {fileID: 391197817}
   - component: {fileID: 391197816}
   - component: {fileID: 391197815}
-  - component: {fileID: 391197814}
+  - component: {fileID: 391197818}
   m_Layer: 0
   m_Name: Plane
-  m_TagString: Untagged
+  m_TagString: WhatIsGround
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!64 &391197814
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 391197813}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!23 &391197815
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -825,11 +803,32 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 20, y: 1, z: 20}
+  m_LocalScale: {x: 202.57999, y: 10.129, z: 202.57999}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &391197818
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 391197813}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 10, y: 14.33, z: 10}
+  m_Center: {x: 0, y: -6.93, z: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1663,6 +1662,7 @@ GameObject:
   - component: {fileID: 877492774}
   - component: {fileID: 877492773}
   - component: {fileID: 877492772}
+  - component: {fileID: 877492775}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1791,7 +1791,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &877492773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1805,13 +1805,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Camera: {fileID: 1334095737}
-  walkSpeed: 3
-  sprintSpeed: 6
-  crouchSpeed: 1.5
-  startYScale: 1
-  crouchYScale: 0.5
-  m_SmoothTime: 40
-  action: 0
+  m_SmoothRotTime: 40
+  m_WalkSpeed: 3
+  m_SprintSpeed: 6
+  m_DurationCanSilde: 1
+  m_CrouchSpeed: 1.5
+  m_SlideSpeed: 15
+  m_StartYScale: 1
+  m_CrouchYScale: 0.5
+  m_CurrentSpeed: 0
+  m_IsGround: 0
+  m_Action: 0
 --- !u!114 &877492774
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1826,6 +1830,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   lookInput: {x: 0, y: 0}
   moveInput: {x: 0, y: 0}
+--- !u!114 &877492775
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 877492765}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96a30a12ffd343844a94595229cf1fc9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidBody: {fileID: 877492772}
+  doGravity: 1
 --- !u!1 &989935198
 GameObject:
   m_ObjectHideFlags: 0
@@ -3295,27 +3313,45 @@ MonoBehaviour:
       m_Action: Shoot
       m_Flags: 0
     m_Flags: 0
-  jumpboost:
-    m_Name: Jumpboost
+  control:
+    m_Name: Control
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: 3bf817a0-7bf4-4765-b76e-1307c21e070c
+    m_Id: ce375eca-beef-4dca-a9e3-7011b51349fb
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: be415dc1-1982-41ec-a3fc-43f9a24f41be
-      m_Path: <Keyboard>/space
+    - m_Name: 1D Axis
+      m_Id: 4878b450-9fa4-42b8-b58f-c9668de1d24c
+      m_Path: 1DAxis
       m_Interactions: 
       m_Processors: 
       m_Groups: 
-      m_Action: Jumpboost
-      m_Flags: 0
+      m_Action: Control
+      m_Flags: 4
+    - m_Name: negative
+      m_Id: add2265a-e1f9-48f7-8b49-d4eec649e906
+      m_Path: <Keyboard>/a
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Control
+      m_Flags: 8
+    - m_Name: positive
+      m_Id: a1691cd2-4724-41d8-a21c-1e07d2d016d6
+      m_Path: <Keyboard>/d
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Control
+      m_Flags: 8
     m_Flags: 0
+  maxSpeed: 60
   speed: 2
-  upForce: 90
-  boostForce: 5
-  rb: {fileID: 877492772}
+  upBoostForce: 120
+  boostForce: 1
+  rigidBody: {fileID: 877492775}
+  offsetPercentX: -0.001
 --- !u!1 &1687850479
 GameObject:
   m_ObjectHideFlags: 0
@@ -3902,27 +3938,45 @@ MonoBehaviour:
       m_Action: Shoot
       m_Flags: 0
     m_Flags: 0
-  jumpboost:
-    m_Name: Jumpboost
+  control:
+    m_Name: Control
     m_Type: 0
     m_ExpectedControlType: 
-    m_Id: 3bf817a0-7bf4-4765-b76e-1307c21e070c
+    m_Id: 4531897a-6165-4f32-b646-dd130d09b7eb
     m_Processors: 
     m_Interactions: 
     m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: be415dc1-1982-41ec-a3fc-43f9a24f41be
-      m_Path: <Keyboard>/space
+    - m_Name: 1D Axis
+      m_Id: 4878b450-9fa4-42b8-b58f-c9668de1d24c
+      m_Path: 1DAxis
       m_Interactions: 
       m_Processors: 
       m_Groups: 
-      m_Action: Jumpboost
-      m_Flags: 0
+      m_Action: Control
+      m_Flags: 4
+    - m_Name: negative
+      m_Id: add2265a-e1f9-48f7-8b49-d4eec649e906
+      m_Path: <Keyboard>/a
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Control
+      m_Flags: 8
+    - m_Name: positive
+      m_Id: a1691cd2-4724-41d8-a21c-1e07d2d016d6
+      m_Path: <Keyboard>/d
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: Control
+      m_Flags: 8
     m_Flags: 0
+  maxSpeed: 60
   speed: 2
-  upForce: 90
-  boostForce: 5
-  rb: {fileID: 877492772}
+  upBoostForce: 120
+  boostForce: 1
+  rigidBody: {fileID: 877492775}
+  offsetPercentX: 0.001
 --- !u!1 &1900727490
 GameObject:
   m_ObjectHideFlags: 0
