@@ -277,7 +277,7 @@ MonoBehaviour:
   recoil: 0
   aimSpeed: 0
   effectiveRange: 0
-  fireMode: 1
+  fireMode: 2
   noise: 0
   oneRoundReload: 0
   muzzle: {fileID: 968428109}

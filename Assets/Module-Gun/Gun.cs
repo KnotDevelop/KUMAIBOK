@@ -16,13 +16,13 @@ namespace FpsGame.Gun
         public GunFireMode fireMode;
         public float noise;
         public bool oneRoundReload;
-
         [SerializeField] Transform muzzle;
         private float m_RpsCooldown = 0;
         [SerializeField]
         private float m_CurrentBullet;
         private Coroutine m_ReloadingRoutine;
         private Coroutine m_ShootRoutine;
+        bool m_IsShooting = false;
         private float m_Rps => 1f / rps;
         private bool m_EmptyMagazine => m_CurrentBullet <= 0;
 
@@ -44,7 +44,6 @@ namespace FpsGame.Gun
         {
             while (true)
             {
-                //Debug.Log($"{Time.time} {m_RpsCooldown}");
                 if (Time.time > m_RpsCooldown)
                 {
                     Debug.Log("FullAutoShoot");
@@ -52,16 +51,45 @@ namespace FpsGame.Gun
                     m_CurrentBullet -= 1;
                     m_RpsCooldown = Time.time + m_Rps;
                     if (m_EmptyMagazine)
-                        OnTriggerRelease();
+                        StopShooting();
                 }
                 yield return new WaitForEndOfFrame();
             }
+        }
+
+        void Shooting_Brust_3_Round()
+        {
+            IEnumerator Routine()
+            {
+                for (int i = 0; i < 3; i++)
+                {
+                    Debug.Log("Brust_3_RoundShoot" + i);
+                    HitTargetCheck();
+                    m_CurrentBullet -= 1;
+                    if (m_EmptyMagazine)
+                    {
+                        StopShooting();
+                        yield break;
+                    }
+                    yield return new WaitForSeconds(m_Rps);
+                }
+                StopShooting();
+            }
+            m_ShootRoutine = StartCoroutine(Routine());
+        }
+        void Shooting_Single()
+        {
+            Debug.Log("SingleShoot");
+            HitTargetCheck();
+            m_CurrentBullet -= 1;
+            StopShooting();
         }
         void StopShooting()
         {
             if (m_ShootRoutine == null) return;
             StopCoroutine(m_ShootRoutine);
             m_ShootRoutine = null;
+            m_IsShooting = false;
         }
         void HitTargetCheck()
         {
@@ -80,20 +108,25 @@ namespace FpsGame.Gun
                 return;
             }
 
-            StopShooting();
+            if (m_IsShooting) return;
+            m_IsShooting = true;
+
             switch (fireMode)
             {
                 case GunFireMode.Single:
+                    Shooting_Single();
                     break;
                 case GunFireMode.Full_Auto:
                     m_ShootRoutine = StartCoroutine(Shooting_FullAuto());
                     break;
                 case GunFireMode.Burst_3_Round:
+                    Shooting_Brust_3_Round();
                     break;
             }
         }
         public void OnTriggerRelease()
         {
+            if (fireMode == GunFireMode.Burst_3_Round) return;
             StopShooting();
         }
         [ContextMenu("Reload")]
