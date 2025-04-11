@@ -26,19 +26,6 @@ namespace FpsGame.Gun
         private float m_Rps => 1f / rps;
         private bool m_EmptyMagazine => m_CurrentBullet <= 0;
 
-
-        private void Update()
-        {
-            if (Input.GetKeyDown(KeyCode.O))
-            {
-                OnTriggerPull();
-            }
-            if (Input.GetKeyUp(KeyCode.O))
-            {
-                OnTriggerRelease();
-            }
-        }
-
         [ContextMenu("Shot")]
         IEnumerator Shooting_FullAuto()
         {
@@ -56,7 +43,6 @@ namespace FpsGame.Gun
                 yield return new WaitForEndOfFrame();
             }
         }
-
         void Shooting_Brust_3_Round()
         {
             IEnumerator Routine()
