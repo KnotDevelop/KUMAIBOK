@@ -40,7 +40,6 @@ public class SwingController : MonoBehaviour
 
     [SerializeField]
     float maxSpeed = 10;
-    private Coroutine instanceCoroutine;
     private List<Coroutine> dotInstancesCoroutine = new List<Coroutine>();
 
     /// <summary>
@@ -76,12 +75,12 @@ public class SwingController : MonoBehaviour
     [SerializeField]
     private float offsetPercentX;
 
+    SpringJoint joint;
+
     void Start()
     {
         shoot.Enable();
         control.Enable();
-        rigidBody.RegisterVelocity("JumpSwing");
-        rigidBody.RegisterVelocity("BoostSwing");
     }
 
     void Update()
@@ -98,13 +97,10 @@ public class SwingController : MonoBehaviour
         if (shoot.WasPressedThisFrame())
         {
             ResetSwing();
-            instanceCoroutine = StartCoroutine(FlickerLine());
+            FlickerLine();
             JumpToSwingPoint();
         }
-        if (shoot.IsPressed())
-        {
-            BoostToSwingPoint();
-        }
+
         if (shoot.WasReleasedThisFrame())
         {
             ResetSwing();
@@ -124,78 +120,45 @@ public class SwingController : MonoBehaviour
     /// </summary>
     private void ResetSwing()
     {
-        if (instanceCoroutine != null)
-        {
-            StopCoroutine(instanceCoroutine);
-        }
+        if (joint)
+            Destroy(joint);
+
         foreach (var d in dotInstancesCoroutine)
         {
+            if (d == null)
+                continue;
             StopCoroutine(d);
         }
         dotInstancesCoroutine.Clear();
         line.positionCount = 1;
-        rigidBody.doGravity = true;
     }
 
     /// <summary>
     /// Flicker all dots in line at the start of swing for aesthetic purpose.
     /// </summary>
     /// <returns></returns>
-    IEnumerator FlickerLine()
+    void FlickerLine()
     {
-        rigidBody.doGravity = false;
-
-        line.positionCount = lineResolution;
-        for (int i = 0; i < lineResolution; i++)
-        {
-            line.SetPosition(i, transform.position);
-        }
+        const float maxDist = 300;
+        const float maxDistSwing = 8;
         Vector3 center = Vector2.zero;
         center.y = Screen.height / 2;
-        center.x = Screen.width / 2 + Screen.width * offsetPercentX;
+        center.x = (Screen.width / 2);
         Ray r = Camera.main.ScreenPointToRay(center);
 
-        if (Physics.Raycast(r, out var hit, 200))
+        if (Physics.Raycast(r, out var hit, maxDist))
         {
+            line.positionCount = 2;
+            joint = rigidBody.gameObject.AddComponent<SpringJoint>();
+            joint.connectedAnchor = hit.point;
+            joint.spring = 100;
+            joint.damper = 1;
+            joint.minDistance = 2;
+            joint.maxDistance = hit.distance * 0.9f;
+            joint.autoConfigureConnectedAnchor = false;
             swingPoint = hit.point;
-            for (int i = lineResolution; i > 0; i--)
-            {
-                dotInstancesCoroutine.Add(StartCoroutine(FlickerSingleDot(i, hit.point)));
-                yield return new WaitForSeconds(0.02f);
-            }
+            line.SetPosition(1, hit.point);
         }
-        instanceCoroutine = null;
-    }
-
-    /// <summary>
-    /// Flicker the dot in line to create aesthetic purpose.
-    /// </summary>
-    /// <param name="i"></param>
-    /// <param name="endPoint"></param>
-    /// <returns></returns>
-    IEnumerator FlickerSingleDot(int i, Vector3 endPoint)
-    {
-        float lerp = 0;
-        while (lerp < 1)
-        {
-            lerp += Time.deltaTime * speed;
-            var p = Vector3.Lerp(startPoint.position, endPoint, lerp);
-            p.y += flickerCurve.Evaluate(lerp);
-            line.SetPosition(i, p);
-            yield return new WaitForEndOfFrame();
-        }
-    }
-
-    /// <summary>
-    /// Continous applied force during swing to the target position.
-    /// </summary>
-    private void BoostToSwingPoint()
-    {
-        var c = control.ReadValue<float>();
-        Vector3 toCenterForce = swingPoint - transform.position;
-        toCenterForce = toCenterForce.normalized * upBoostForce;
-        rigidBody.AddVelocity("BoostSwing", toCenterForce );
-        rigidBody.Clamp("BoostSwing", -maxSpeed, maxSpeed);
     }
 
     /// <summary>
@@ -205,6 +168,6 @@ public class SwingController : MonoBehaviour
     {
         Vector3 displacement = swingPoint - transform.position;
         displacement = displacement.normalized;
-        rigidBody.SetVelocity("JumpSwing", displacement * boostForce);
+        rigidBody.AddForceClamp(displacement * boostForce, boostForce);
     }
 }

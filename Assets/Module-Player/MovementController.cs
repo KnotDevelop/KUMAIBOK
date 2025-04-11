@@ -63,7 +63,6 @@ namespace FpsGame.Player
         {
             m_Input = GetComponent<InputSystem>();
             m_Rigidbody = GetComponent<RigidBodyHandler>();
-            m_Rigidbody.RegisterVelocity(nameof(MovementController));
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             m_CurrentSpeed = m_WalkSpeed;
@@ -75,7 +74,6 @@ namespace FpsGame.Player
             HandleSprint();
             HandleCrouch();
             HandleCameraNoise();
-            debug_velo = m_Rigidbody.GetVelocity(nameof(MovementController));
         }
 
         private void FixedUpdate()
@@ -117,9 +115,9 @@ namespace FpsGame.Player
                 m_IsMove = true;
 
             Vector3 targetVelocity = move * m_CurrentSpeed;
-            m_Rigidbody.SetVelocity(
-                nameof(MovementController),
-                new Vector3(targetVelocity.x, 0, targetVelocity.z)
+            m_Rigidbody.AddForceClamp(
+                new Vector3(targetVelocity.x, 0, targetVelocity.z),
+                m_CurrentSpeed
             );
         }
 
@@ -142,14 +140,16 @@ namespace FpsGame.Player
         /// </summary>
         private void HandleMovementSpeed()
         {
-            Vector3 flatVel = m_Rigidbody.GetVelocity(nameof(MovementController));
+            if (!IsGround)
+                return;
+            Vector3 flatVel = m_Rigidbody.CurrentSpeed;
 
             if (flatVel.sqrMagnitude > m_CurrentSpeed * m_CurrentSpeed)
             {
                 Vector3 limitedFlatVel = flatVel.normalized * m_CurrentSpeed;
-                m_Rigidbody.SetVelocity(
-                    nameof(MovementController),
-                    new Vector3(limitedFlatVel.x, 0, limitedFlatVel.z)
+                m_Rigidbody.AddForceClamp(
+                    new Vector3(limitedFlatVel.x, 0, limitedFlatVel.z),
+                    m_CurrentSpeed
                 );
             }
         }
